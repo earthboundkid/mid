@@ -34,7 +34,7 @@ func (stack *Stack) Push(mw ...Middleware) {
 // PushIf adds Middleware to end of the stack if cond is true.
 func (stack *Stack) PushIf(cond bool, mw ...Middleware) {
 	if cond {
-		*stack = append(*stack, mw...)
+		stack.Push(mw...)
 	}
 }
 
