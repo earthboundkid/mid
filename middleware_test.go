@@ -9,6 +9,8 @@ import (
 	"github.com/earthboundkid/mid"
 
 	"github.com/carlmjohnson/be"
+	"github.com/carlmjohnson/requests"
+	"github.com/carlmjohnson/requests/reqtest"
 )
 
 func TestMiddleware(t *testing.T) {
@@ -162,4 +164,51 @@ func TestStack(t *testing.T) {
 	w = httptest.NewRecorder()
 	h3.ServeHTTP(w, nil)
 	be.Equal(t, "135h531", w.Body.String())
+}
+
+func TestHandle(t *testing.T) {
+	// Middleware that runs before and after some handlers
+	mws := mid.Stack{
+		func(h http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte("before,"))
+				h.ServeHTTP(w, r)
+			})
+		},
+		func(h http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				h.ServeHTTP(w, r)
+				w.Write([]byte(",after"))
+			})
+		},
+	}
+
+	// ServeMux with different handlers on /a /b and /c
+	mux := http.NewServeMux()
+	mws.Handle(mux, "/a", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("a"))
+	}))
+	mws.HandleFunc(mux, "/b", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("b"))
+	})
+	mws.Control(mux, "/c", func(w http.ResponseWriter, r *http.Request) http.Handler {
+		w.Write([]byte("c"))
+		return nil
+	})
+
+	// Setup a test server
+	s := httptest.NewServer(mux)
+	defer s.Close()
+	req := requests.New(reqtest.Server(s))
+
+	// Make sure it all works
+	var body string
+	be.NilErr(t, req.Path("/a").ToString(&body).Fetch(t.Context()))
+	be.Equal(t, "before,a,after", body)
+
+	be.NilErr(t, req.Path("/b").ToString(&body).Fetch(t.Context()))
+	be.Equal(t, "before,b,after", body)
+
+	be.NilErr(t, req.Path("/c").ToString(&body).Fetch(t.Context()))
+	be.Equal(t, "before,c,after", body)
 }

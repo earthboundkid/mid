@@ -1,7 +1,10 @@
 module github.com/earthboundkid/mid
 
-toolchain go1.22.0
+go 1.25
 
-go 1.22
+require github.com/carlmjohnson/be v0.25.1
 
-require github.com/carlmjohnson/be v0.23.2
+require (
+	github.com/carlmjohnson/requests v0.25.1 // indirect
+	golang.org/x/net v0.38.0 // indirect
+)
