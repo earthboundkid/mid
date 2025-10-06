@@ -49,8 +49,7 @@ func (stack *Stack) With(mw ...Middleware) Stack {
 //
 // Handler is itself a Middleware.
 func (stack Stack) Handler(h http.Handler) http.Handler {
-	for i := len(stack) - 1; i >= 0; i-- {
-		m := (stack)[i]
+	for _, m := range slices.Backward(stack) {
 		h = m(h)
 	}
 	return h
@@ -68,4 +67,19 @@ func (stack Stack) HandlerFunc(f http.HandlerFunc) http.Handler {
 // before calling c.
 func (stack Stack) Controller(c Controller) http.Handler {
 	return stack.Handler(c)
+}
+
+// Handle applies the Stack to h and registers the resulting handler in mux with the given pattern.
+func (stack Stack) Handle(mux *http.ServeMux, pattern string, h http.Handler) {
+	mux.Handle(pattern, stack.Handler(h))
+}
+
+// HandleFunc applies the Stack to f and registers the resulting handler in mux with the given pattern.
+func (stack Stack) HandleFunc(mux *http.ServeMux, pattern string, f http.HandlerFunc) {
+	stack.Handle(mux, pattern, f)
+}
+
+// Control applies the Stack to c and registers the resulting handler in mux with the given pattern.
+func (stack Stack) Control(mux *http.ServeMux, pattern string, c Controller) {
+	stack.Handle(mux, pattern, c)
 }
