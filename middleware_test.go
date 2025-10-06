@@ -76,6 +76,17 @@ func TestController(t *testing.T) {
 }
 
 func TestStack(t *testing.T) {
+	// Two basic handlers that just return h or g
+	h := func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("h"))
+	}
+
+	g := func(w http.ResponseWriter, r *http.Request) http.Handler {
+		w.Write([]byte("g"))
+		return nil
+	}
+
+	// Wrap it in a Stack
 	mws1 := mid.Stack{
 		func(h http.Handler) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -84,10 +95,6 @@ func TestStack(t *testing.T) {
 				w.Write([]byte("1"))
 			})
 		},
-	}
-
-	h := func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("h"))
 	}
 
 	h1 := mws1.HandlerFunc(h)
@@ -101,11 +108,6 @@ func TestStack(t *testing.T) {
 			h.ServeHTTP(w, r)
 			w.Write([]byte("2"))
 		})
-	}
-
-	g := func(w http.ResponseWriter, r *http.Request) http.Handler {
-		w.Write([]byte("g"))
-		return nil
 	}
 
 	g1 := mws2.Controller(g)
@@ -127,6 +129,7 @@ func TestStack(t *testing.T) {
 		})
 	})
 
+	// Test With to see if original is the same
 	mws3 := mws1.With(func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("5"))
@@ -159,5 +162,4 @@ func TestStack(t *testing.T) {
 	w = httptest.NewRecorder()
 	h3.ServeHTTP(w, nil)
 	be.Equal(t, "135h531", w.Body.String())
-
 }
