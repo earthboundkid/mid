@@ -70,16 +70,19 @@ func (stack Stack) Controller(c Controller) http.Handler {
 }
 
 // Handle applies the Stack to h and registers the resulting handler in mux with the given pattern.
-func (stack Stack) Handle(mux *http.ServeMux, pattern string, h http.Handler) {
+func (stack Stack) Handle(mux *http.ServeMux, pattern string, h http.Handler) Stack {
 	mux.Handle(pattern, stack.Handler(h))
+	return stack
 }
 
 // HandleFunc applies the Stack to f and registers the resulting handler in mux with the given pattern.
-func (stack Stack) HandleFunc(mux *http.ServeMux, pattern string, f http.HandlerFunc) {
+func (stack Stack) HandleFunc(mux *http.ServeMux, pattern string, f http.HandlerFunc) Stack {
 	stack.Handle(mux, pattern, f)
+	return stack
 }
 
 // Control applies the Stack to c and registers the resulting handler in mux with the given pattern.
-func (stack Stack) Control(mux *http.ServeMux, pattern string, c Controller) {
+func (stack Stack) Control(mux *http.ServeMux, pattern string, c Controller) Stack {
 	stack.Handle(mux, pattern, c)
+	return stack
 }
