@@ -185,16 +185,17 @@ func TestHandle(t *testing.T) {
 
 	// ServeMux with different handlers on /a /b and /c
 	mux := http.NewServeMux()
-	mws.Handle(mux, "/a", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("a"))
-	}))
-	mws.HandleFunc(mux, "/b", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("b"))
-	})
-	mws.Control(mux, "/c", func(w http.ResponseWriter, r *http.Request) http.Handler {
-		w.Write([]byte("c"))
-		return nil
-	})
+	mws.
+		Handle(mux, "/a", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("a"))
+		})).
+		HandleFunc(mux, "/b", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("b"))
+		}).
+		Control(mux, "/c", func(w http.ResponseWriter, r *http.Request) http.Handler {
+			w.Write([]byte("c"))
+			return nil
+		})
 
 	// Setup a test server
 	s := httptest.NewServer(mux)
