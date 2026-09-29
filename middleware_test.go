@@ -8,12 +8,13 @@ import (
 
 	"github.com/earthboundkid/mid"
 
-	"github.com/carlmjohnson/be"
 	"github.com/carlmjohnson/requests"
 	"github.com/carlmjohnson/requests/reqtest"
+	"github.com/earthboundkid/assert"
 )
 
 func TestMiddleware(t *testing.T) {
+	be := assert.Continues(t)
 	mws := mid.Stack{
 		func(h http.Handler) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -48,15 +49,16 @@ func TestMiddleware(t *testing.T) {
 	// Work once
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, nil)
-	be.Equal(t, "123h321", w.Body.String())
+	be.Equal(w.Body.String(), "123h321")
 
 	// Work multiple times
 	w = httptest.NewRecorder()
 	h.ServeHTTP(w, nil)
-	be.Equal(t, "123h321", w.Body.String())
+	be.Equal(w.Body.String(), "123h321")
 }
 
 func TestController(t *testing.T) {
+	be := assert.Continues(t)
 	cond := true
 	c := mid.Controller(func(w http.ResponseWriter, r *http.Request) http.Handler {
 		if cond {
@@ -69,15 +71,16 @@ func TestController(t *testing.T) {
 	})
 	w := httptest.NewRecorder()
 	c.ServeHTTP(w, nil)
-	be.Equal(t, "1", w.Body.String())
+	be.Equal(w.Body.String(), "1")
 
 	cond = false
 	w = httptest.NewRecorder()
 	c.ServeHTTP(w, nil)
-	be.Equal(t, "2", w.Body.String())
+	be.Equal(w.Body.String(), "2")
 }
 
 func TestStack(t *testing.T) {
+	be := assert.Continues(t)
 	// Two basic handlers that just return h or g
 	h := func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("h"))
@@ -145,28 +148,29 @@ func TestStack(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	h1.ServeHTTP(w, nil)
-	be.Equal(t, "1h1", w.Body.String())
+	be.Equal(w.Body.String(), "1h1")
 
 	w = httptest.NewRecorder()
 	g1.ServeHTTP(w, nil)
-	be.Equal(t, "2g2", w.Body.String())
+	be.Equal(w.Body.String(), "2g2")
 
 	w = httptest.NewRecorder()
 	h2.ServeHTTP(w, nil)
-	be.Equal(t, "13h31", w.Body.String())
+	be.Equal(w.Body.String(), "13h31")
 
 	g2 := mws2.Controller(g)
 
 	w = httptest.NewRecorder()
 	g2.ServeHTTP(w, nil)
-	be.Equal(t, "2g2", w.Body.String())
+	be.Equal(w.Body.String(), "2g2")
 
 	w = httptest.NewRecorder()
 	h3.ServeHTTP(w, nil)
-	be.Equal(t, "135h531", w.Body.String())
+	be.Equal(w.Body.String(), "135h531")
 }
 
 func TestHandle(t *testing.T) {
+	be := assert.Continues(t)
 	// Middleware that runs before and after some handlers
 	mws := mid.Stack{
 		func(h http.Handler) http.Handler {
@@ -198,18 +202,17 @@ func TestHandle(t *testing.T) {
 		})
 
 	// Setup a test server
-	s := httptest.NewServer(mux)
-	defer s.Close()
+	s := httptest.NewTestServer(t, mux)
 	req := requests.New(reqtest.Server(s))
 
 	// Make sure it all works
 	var body string
-	be.NilErr(t, req.Path("/a").ToString(&body).Fetch(t.Context()))
-	be.Equal(t, "before,a,after", body)
+	be.NilError(req.Path("/a").ToString(&body).Fetch(t.Context()))
+	be.Equal(body, "before,a,after")
 
-	be.NilErr(t, req.Path("/b").ToString(&body).Fetch(t.Context()))
-	be.Equal(t, "before,b,after", body)
+	be.NilError(req.Path("/b").ToString(&body).Fetch(t.Context()))
+	be.Equal(body, "before,b,after")
 
-	be.NilErr(t, req.Path("/c").ToString(&body).Fetch(t.Context()))
-	be.Equal(t, "before,c,after", body)
+	be.NilError(req.Path("/c").ToString(&body).Fetch(t.Context()))
+	be.Equal(body, "before,c,after")
 }
