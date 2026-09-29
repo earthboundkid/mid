@@ -1,10 +1,10 @@
 module github.com/earthboundkid/mid
 
-go 1.25.0
+go 1.27
 
 require (
-	github.com/carlmjohnson/be v0.25.2
-	github.com/carlmjohnson/requests v0.25.1
+	github.com/carlmjohnson/requests v0.26.1
+	github.com/earthboundkid/assert v0.26.6
 )
 
-require golang.org/x/net v0.53.0 // indirect
+require golang.org/x/net v0.59.0 // indirect
